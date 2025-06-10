@@ -36,4 +36,3 @@ def classify_severity(message):
     return "Minor"
 
 
-
