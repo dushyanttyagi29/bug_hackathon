@@ -16,4 +16,4 @@ def fetch_stackoverflow_results(query, num_results=15):
     if response.status_code == 200:
         return response.json().get("items", [])
     else:
-        return []  # fixed: Python uses '#' for comments
+        return [] 
