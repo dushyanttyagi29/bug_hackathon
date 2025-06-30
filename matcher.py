@@ -1,33 +1,39 @@
 from sentence_transformers import SentenceTransformer, util
 import re
 
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer('mixedbread-ai/mxbai-embed-large-v1')
 
 def strip_html_and_shorten(text, max_len=200):
-    """Remove HTML tags and limit text length."""
     clean_text = re.sub('<[^<]+?>', '', text)
     return clean_text[:max_len] + "..." if len(clean_text) > max_len else clean_text
 
-def match_posts(user_input, stack_posts, threshold=0.3):
-   
-    user_embed = model.encode(user_input, convert_to_tensor=True)
-    texts = [post['title'] + " " + post['body'] for post in stack_posts]
+def match_posts(user_input, stack_posts, top_k=3):
+    """Return top-k similar posts for the user input."""
+    
+    user_embed = model.encode("query: " + user_input, convert_to_tensor=True)
+
+    texts = ["passage: " + (post['title'] + " " + post['description']) for post in stack_posts]
     post_embeds = model.encode(texts, convert_to_tensor=True)
+
 
     similarities = util.cos_sim(user_embed, post_embeds)[0]
 
+    # Pair each post with its similarity score
+    scored_posts = [
+        (stack_posts[i], float(similarities[i]))
+        for i in range(len(stack_posts))
+    ]
+
+    # Sort by score descending
+    scored_posts.sort(key=lambda x: x[1], reverse=True)
+
     results = []
-    for idx, score in enumerate(similarities):
-        score_float = float(score)
+    for post, score in scored_posts[:top_k]:
+        results.append({
+            "title": post['title'],
+            "link": post['link'],
+            "score": round(score, 3),
+            "preview": strip_html_and_shorten(post['description'])
+        })
 
-        if score_float >= threshold:
-            results.append({
-                "title": stack_posts[idx]['title'],
-                "link": stack_posts[idx]['link'],
-                "score": round(score_float, 3),
-                "preview": strip_html_and_shorten(stack_posts[idx]['body'])
-            })
-
-    sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
-    return sorted_results[:3] if sorted_results else []
+    return results

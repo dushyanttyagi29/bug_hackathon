@@ -1,37 +1,39 @@
 import streamlit as st
-from stack_api import fetch_stackoverflow_results
+from jira_api import fetch_jira_issues
 from matcher import match_posts
 
-st.set_page_config(page_title="StackSmart", layout="centered")
-st.title("BugSense: AI-Powered Bug Search & Explanation")
+st.set_page_config(page_title="BugMatch - Jira AI", layout="centered")
+st.title("BugSense: AI-Powered Jira Bug Matcher")
 
-query = st.text_area("🔍 Paste your bug/error message here:")
+query = st.text_area("🐞 Paste your bug/error message here:")
 
-if st.button("🔎 Find Similar Solutions"):
+if st.button("🔎 Find Similar Jira Issues"):
     with st.spinner("Thinking..."):
-        so_posts = fetch_stackoverflow_results(query)
+        jira_issues = fetch_jira_issues(query)
 
-       
-        st.info(f"🔍 StackOverflow returned {len(so_posts)} posts.")
-
-        
-        for i, post in enumerate(so_posts[:3]):
-            st.markdown(f"**Post {i+1}: [{post['title']}]({post['link']})**")
-            short_body = post['body'].replace("<p>", "").replace("</p>", "").replace("<code>", "`").replace("</code>", "`")
-            st.caption(short_body[:200] + "..." if len(short_body) > 200 else short_body)
-
-        if not so_posts:
-            st.warning("❌ No results found from Stack Overflow. Try rephrasing the error.")
+        if not jira_issues:
+            st.warning("❌ No results found from Jira. Try rephrasing the error.")
         else:
-            matches = match_posts(query, so_posts)
+            st.info(f"🐞 Jira returned {len(jira_issues)} issues.")
 
-           
+            for i, issue in enumerate(jira_issues[:3]):
+                st.markdown(f"**Issue {i+1}: [{issue['title']}]({issue['link']})**")
+                
+                # Fix: safely convert description to string
+                raw_desc = issue.get('description', '')
+                desc_str = str(raw_desc)
+                short_desc = desc_str.replace("\n", " ")
+                
+                st.caption(short_desc[:200] + "..." if len(short_desc) > 200 else short_desc)
+
+            matches = match_posts(query, jira_issues)
+
             st.write("🧠 Match Titles:", [m['title'] for m in matches] if matches else "None")
 
             if matches:
-                st.success(f"✅ Found {len(matches)} similar questions:")
+                st.success(f"✅ Found {len(matches)} similar issues:")
                 for match in matches:
                     st.markdown(f"**🔗 [{match['title']}]({match['link']})**")
                     st.caption(f"Similarity Score: `{match['score']:.2f}`")
             else:
-                st.error("❌ No similar resolved issues found. Try changing the wording or details.")
+                st.error("❌ No similar resolved Jira issues found. Try changing the wording or details.")
