@@ -10,17 +10,7 @@ def strip_html_and_shorten(text, max_len=200):
     return clean_text[:max_len] + "..." if len(clean_text) > max_len else clean_text
 
 def match_posts(user_input, stack_posts, threshold=0.3):
-    """
-    Finds semantically similar posts from stack_posts based on user_input.
-
-    Args:
-        user_input (str): Bug/error reported by user.
-        stack_posts (list): List of dicts with 'title', 'body', and 'link'.
-        threshold (float): Minimum cosine similarity to consider a valid match.
-
-    Returns:
-        List of top 3 matched posts with score >= threshold.
-    """
+   
     user_embed = model.encode(user_input, convert_to_tensor=True)
     texts = [post['title'] + " " + post['body'] for post in stack_posts]
     post_embeds = model.encode(texts, convert_to_tensor=True)
