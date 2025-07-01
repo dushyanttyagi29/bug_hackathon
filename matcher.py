@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer, util
 import re
 
-model = SentenceTransformer('mixedbread-ai/mxbai-embed-large-v1')
+model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
 
 def strip_html_and_shorten(text, max_len=200):
     clean_text = re.sub('<[^<]+?>', '', text)
